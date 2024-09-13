@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "BrooksAthletics",
+    "name": "Brooks Athletics",
     "slug": "BrooksAthletics",
-    "version": "1.0.0",
+    "version": "1.0.15",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -11,17 +11,36 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Brooks Athletics to access your camera so that you can share images of events that you have participated in.",
+          "microphonePermission": "Allow Brooks Athletics to access your microphone so that you can share events that you have participated in.",
+          "recordAudioAndroid": true
+        }
+      ]
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "buildNumber": "19",
+      "bundleIdentifier": "com.ehayng1.BrooksAthletics"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+      "versionCode": 9,
+      "package": "com.ehayng1.BrooksAthleticsAndriod",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "bd2765a9-c10a-43f5-9bb7-b3642dd27113"
+      }
     }
   }
 }
