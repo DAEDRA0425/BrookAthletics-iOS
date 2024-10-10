@@ -6,7 +6,7 @@ import {
   ScrollView,
   Pressable,
   Alert,
-  RefreshControl
+  RefreshControl,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import {
@@ -28,7 +28,7 @@ import {
   increment,
   addDoc,
   where,
-  deleteDoc
+  deleteDoc,
 } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "../firebase";
@@ -56,34 +56,42 @@ export function Gallery() {
   };
   async function getPosts() {
     setRefreshing(true);
-    const blockedQuery = query(collection(db, "Block"), where("requestedBy", "==", email))
+    const blockedQuery = query(
+      collection(db, "Block"),
+      where("requestedBy", "==", email)
+    );
     const blockedSnapshot = await getDocs(blockedQuery);
-    var blockedUser = []
+    var blockedUser = [];
     blockedSnapshot.forEach((doc) => {
-      var data = doc.data()
-      console.log("HEY", data)
-      blockedUser.push(data["ownerEmail"])
-    })
+      var data = doc.data();
+      console.log("HEY", data);
+      blockedUser.push(data["ownerEmail"]);
+    });
 
-    const flagQuery = query(collection(db, "Flags"), where("requestedBy", "==", email))
+    const flagQuery = query(
+      collection(db, "Flags"),
+      where("requestedBy", "==", email)
+    );
     const flagSnapshot = await getDocs(flagQuery);
-    var flaggedPosts = []
+    var flaggedPosts = [];
     flagSnapshot.forEach((doc) => {
-      var data = doc.data()
-      flaggedPosts.push(data["postId"])
-    })
-    
-    const q = query(collection(db, "Gallery"), orderBy("timestamp"));
+      var data = doc.data();
+      flaggedPosts.push(data["postId"]);
+    });
+
+    const q = query(collection(db, "Gallery"), orderBy("timestamp", "desc"));
     // console.log("Posts: ", q);
     const querySnapshot = await getDocs(q);
 
     let tempPosts = [];
     querySnapshot.forEach((doc) => {
       // console.log(doc.id, " => ", doc.data());
-      var data = doc.data()
-      print("DATA: ", data)
-      if(!blockedUser.includes(data['email']) && !flaggedPosts.includes(doc.id))
-      {
+      var data = doc.data();
+      print("DATA: ", data);
+      if (
+        !blockedUser.includes(data["email"]) &&
+        !flaggedPosts.includes(doc.id)
+      ) {
         tempPosts.push({ ...doc.data(), docId: doc.id });
       }
     });
@@ -134,8 +142,7 @@ export function Gallery() {
   useEffect(() => {
     const init = async () => {
       getUserId();
-      if(email)
-      {
+      if (email) {
         getPosts();
       }
     };
@@ -148,9 +155,7 @@ export function Gallery() {
       }
     >
       {posts.map((post, i) => (
-        <View
-          key={i}
-        >
+        <View key={i}>
           <Post
             key={post.docId}
             userName={post.userName}
@@ -175,54 +180,69 @@ export function Gallery() {
   );
 }
 
-function Header({ src, userName, date, email, postId, ownerEmail, update, setUpdate }) {
-  const block = async(blockUser) => {
+function Header({
+  src,
+  userName,
+  date,
+  email,
+  postId,
+  ownerEmail,
+  update,
+  setUpdate,
+}) {
+  const block = async (blockUser) => {
     const docRef = await addDoc(collection(db, "Block"), {
-        requestedBy: ownerEmail,
-        ownerEmail: blockUser,
+      requestedBy: ownerEmail,
+      ownerEmail: blockUser,
     });
-    setUpdate(!update)
-    alert(blockUser + " has been blocked!")
-  }
+    setUpdate(!update);
+    alert(blockUser + " has been blocked!");
+  };
 
-  const flag = async(flagUser, flagId) => {
+  const flag = async (flagUser, flagId) => {
     const docRef = await addDoc(collection(db, "Flags"), {
-        postId: flagId,
-        requestedBy: ownerEmail,
-        ownerEmail: flagUser
+      postId: flagId,
+      requestedBy: ownerEmail,
+      ownerEmail: flagUser,
     });
-    setUpdate(!update)
-    alert("Flagged!")
-  }
+    setUpdate(!update);
+    alert("Flagged!");
+  };
 
-  const deletePost = async(postId) => {
-    await deleteDoc(doc(db, "Gallery", postId))
-    setUpdate(!update)
-  }
+  const deletePost = async (postId) => {
+    await deleteDoc(doc(db, "Gallery", postId));
+    setUpdate(!update);
+  };
 
-  const report = async(reportUser, reportId) => {
+  const report = async (reportUser, reportId) => {
     const docRef = await addDoc(collection(db, "Reports"), {
-        postId: reportId,
-        requestedBy: ownerEmail,
-        ownerEmail: reportUser,
+      postId: reportId,
+      requestedBy: ownerEmail,
+      ownerEmail: reportUser,
     });
-    setUpdate(!update)
-    alert("Reported!")
-} 
+    setUpdate(!update);
+    alert("Reported!");
+  };
   return (
-    <View style={{ flexDirection: "row", alignItems: 'center', padding: hp(1), justifyContent: 'space-between' }}>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        padding: hp(1),
+        justifyContent: "space-between",
+      }}
+    >
       <View
         style={{
-          flexDirection: "row", 
-          alignItems: 'center',
+          flexDirection: "row",
+          alignItems: "center",
         }}
       >
         <Ionicons
           name="person-circle-outline"
           size={hp(4)}
           color="black"
-          style={{
-          }}
+          style={{}}
         />
         <View style={{ display: "flex", marginLeft: wp("1.5%") }}>
           <Text style={{ fontWeight: "500" }}>{userName}</Text>
@@ -238,9 +258,9 @@ function Header({ src, userName, date, email, postId, ownerEmail, update, setUpd
       </View>
       <View
         style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 10,
         }}
       >
         <MaterialIcons
@@ -248,13 +268,18 @@ function Header({ src, userName, date, email, postId, ownerEmail, update, setUpd
           color="black"
           size={hp(3)}
           onPress={() => {
-            Alert.alert('Block User', 'Would you like to block this user?', [
+            Alert.alert("Block User", "Would you like to block this user?", [
               {
-                text: 'Cancel',
-                onPress: () => console.log('Cancel Pressed'),
-                style: 'cancel',
+                text: "Cancel",
+                onPress: () => console.log("Cancel Pressed"),
+                style: "cancel",
               },
-              { text: 'Yes', onPress: () => { block(email) } },
+              {
+                text: "Yes",
+                onPress: () => {
+                  block(email);
+                },
+              },
             ]);
           }}
         />
@@ -263,14 +288,23 @@ function Header({ src, userName, date, email, postId, ownerEmail, update, setUpd
           color="black"
           size={hp(3)}
           onPress={() => {
-            Alert.alert('Hide Inappropriate Posts', 'Would you like to flag this post and hide it?', [
-              {
-                text: 'Cancel',
-                onPress: () => console.log('Cancel Pressed'),
-                style: 'cancel',
-              },
-              { text: 'Yes', onPress: () => { flag(email, postId) } },
-            ]);
+            Alert.alert(
+              "Hide Inappropriate Posts",
+              "Would you like to flag this post and hide it?",
+              [
+                {
+                  text: "Cancel",
+                  onPress: () => console.log("Cancel Pressed"),
+                  style: "cancel",
+                },
+                {
+                  text: "Yes",
+                  onPress: () => {
+                    flag(email, postId);
+                  },
+                },
+              ]
+            );
           }}
         />
         <MaterialIcons
@@ -278,34 +312,51 @@ function Header({ src, userName, date, email, postId, ownerEmail, update, setUpd
           color="black"
           size={hp(4)}
           onPress={() => {
-            Alert.alert('Report', 'Would you like to report this content as inappropriate?', [
-              {
-                text: 'Cancel',
-                onPress: () => console.log('Cancel Pressed'),
-                style: 'cancel',
-              },
-              { text: 'Yes', onPress: () => { report(email, postId) } },
-            ]);
+            Alert.alert(
+              "Report",
+              "Would you like to report this content as inappropriate?",
+              [
+                {
+                  text: "Cancel",
+                  onPress: () => console.log("Cancel Pressed"),
+                  style: "cancel",
+                },
+                {
+                  text: "Yes",
+                  onPress: () => {
+                    report(email, postId);
+                  },
+                },
+              ]
+            );
           }}
         />
-        {
-          ownerEmail == "admin@admin.com" && 
+        {ownerEmail == "admin@admin.com" && (
           <Ionicons
             name="close-circle-outline"
             color="red"
             size={hp(3)}
             onPress={() => {
-              Alert.alert('Delete Post', 'Are you sure you would like to delete this post?', [
-                {
-                  text: 'Cancel',
-                  onPress: () => console.log('Cancel Pressed'),
-                  style: 'cancel',
-                },
-                { text: 'Yes', onPress: () => { deletePost(postId) } },
-              ]);
+              Alert.alert(
+                "Delete Post",
+                "Are you sure you would like to delete this post?",
+                [
+                  {
+                    text: "Cancel",
+                    onPress: () => console.log("Cancel Pressed"),
+                    style: "cancel",
+                  },
+                  {
+                    text: "Yes",
+                    onPress: () => {
+                      deletePost(postId);
+                    },
+                  },
+                ]
+              );
             }}
           />
-        }
+        )}
       </View>
     </View>
   );
@@ -324,7 +375,7 @@ function Post({
   email,
   ownerEmail,
   update,
-  setUpdate
+  setUpdate,
 }) {
   return (
     <View style={{ marginBottom: 15 }}>
