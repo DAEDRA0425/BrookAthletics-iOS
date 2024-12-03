@@ -3,7 +3,7 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-import React, { useEffect, useState } from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import { UserList } from "./UserList";
 import {
@@ -16,12 +16,13 @@ import {
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "../firebase";
+import {useFocusEffect} from "@react-navigation/native";
 
 export function Events({ navigation }) {
   const [events, setEvents] = useState();
   const [isAdmin, setIsAdmin] = useState(false);
   const [prevEvents, setPrevEvents] = useState([{}]);
-  const [upcomingEvents, setUpcomingEvents] = useState([{}]);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
 
   function stringToTimestamp(dateString) {
     const [year, month, day] = dateString.split("-").map(Number);
@@ -52,9 +53,10 @@ export function Events({ navigation }) {
     let tempEvents = [];
     let tempPrev = [];
     let tempUpcoming = [];
+    const now = new Date().getTime()
     querySnapshot.forEach((doc) => {
       // if a given event's timestamp is larger than current
-      if (stringToTimestamp(doc.data().date) > new Date().getTime()) {
+      if (stringToTimestamp(doc.data().date) > now) {
         tempUpcoming.push(doc.data());
       } else {
         tempPrev.push(doc.data());
@@ -62,16 +64,22 @@ export function Events({ navigation }) {
       //tempEvents.push(doc.data());
     });
     setPrevEvents(tempPrev);
-    setUpcomingEvents(tempUpcoming);
+    tempUpcoming.sort((a, b) => {
+      return new Date(a.date) - new Date(b.date)
+    })
+    setUpcomingEvents(tempUpcoming.slice(0, 3));
     setEvents(tempEvents);
     console.log("upcoming: ", tempUpcoming);
     console.log("prev: ", tempPrev);
     // console.log("events: ", tempEvents);
   }
 
-  useEffect(() => {
-    getEvents();
-  }, []);
+  useFocusEffect(
+      useCallback(() => {
+        getEvents();
+      }, [])
+  );
+
   useEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
@@ -104,61 +112,62 @@ export function Events({ navigation }) {
             UPCOMING EVENTS
           </Text>
           {
-            upcomingEvents[0] ?
-            <View
-              style={{
-                backgroundColor: "white",
-                // height: hp("20%"),
-                marginBottom: hp("2%"),
-                borderRadius: 10,
-                padding: wp("3%"),
-              }}
-            >
-              <Text
-                style={{
-                  textAlign: "center",
-                  fontWeight: "600",
-                  fontSize: 18,
-                  marginTop: 15,
-                }}
+            upcomingEvents.length !== 0 ? upcomingEvents.map((it) =>
+              (<View
+                  id={`${it.date}-${it.description}`}
+                  style={{
+                    backgroundColor: "white",
+                    // height: hp("20%"),
+                    marginBottom: hp("2%"),
+                    borderRadius: 10,
+                    padding: wp("3%"),
+                  }}
               >
-                {upcomingEvents[0] && upcomingEvents[0].description}
-              </Text>
-              <View style={[styles.flex, { marginTop: hp(2) }]}>
-                <Text style={{ fontSize: 17 }}>Sports: </Text>
-                <Text style={{ color: appGrey, fontSize: 15 }}>
-                  {upcomingEvents[0] && upcomingEvents[0].sports}
+                <Text
+                    style={{
+                      textAlign: "center",
+                      fontWeight: "600",
+                      fontSize: 18,
+                      marginTop: 15,
+                    }}
+                >
+                  {it.description}
                 </Text>
-              </View>
-              <View style={[styles.flex, { marginTop: hp(1) }]}>
-                <Text style={{ fontSize: 17 }}>Points: </Text>
-                <Text style={{ color: appGrey, fontSize: 15 }}>
-                  {upcomingEvents[0] && upcomingEvents[0].points}
-                </Text>
-              </View>
-              <View style={[styles.flex, { marginTop: hp(1) }]}>
-                <Text style={{ fontSize: 17 }}>Date: </Text>
-                <Text style={{ color: appGrey, fontSize: 15 }}>
-                  {upcomingEvents[0] && upcomingEvents[0].date}
-                </Text>
-              </View>
-            </View>
-            :
-              <View
-                style={{
-                  backgroundColor: "white",
-                  // height: hp("20%"),
-                  marginBottom: hp("2%"),
-                  borderRadius: 10,
-                  padding: wp("3%"),
-                }}
-              >
-                <Text>
-                  No Upcoming Events
-                </Text>
-              </View>
+                <View style={[styles.flex, {marginTop: hp(2)}]}>
+                  <Text style={{fontSize: 17}}>Sports: </Text>
+                  <Text style={{color: appGrey, fontSize: 15}}>
+                    {it.sports}
+                  </Text>
+                </View>
+                <View style={[styles.flex, {marginTop: hp(1)}]}>
+                  <Text style={{fontSize: 17}}>Points: </Text>
+                  <Text style={{color: appGrey, fontSize: 15}}>
+                    {it.points}
+                  </Text>
+                </View>
+                <View style={[styles.flex, {marginTop: hp(1)}]}>
+                  <Text style={{fontSize: 17}}>Date: </Text>
+                  <Text style={{color: appGrey, fontSize: 15}}>
+                    {it.date}
+                  </Text>
+                </View>
+              </View>)
+            ) : (
+                <View
+                    style={{
+                      backgroundColor: "white",
+                      // height: hp("20%"),
+                      marginBottom: hp("2%"),
+                      borderRadius: 10,
+                      padding: wp("3%"),
+                    }}
+                >
+                  <Text>
+                    No Upcoming Events
+                  </Text>
+                </View>
+            )
           }
-          
           <Text
             style={{
               fontWeight: "400",

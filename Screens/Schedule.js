@@ -17,7 +17,7 @@ import {
   CalendarProvider,
   WeekCalendar,
 } from "react-native-calendars";
-import React, { useEffect, useState } from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {
   query,
   getDocs,
@@ -30,6 +30,7 @@ import { db } from "../firebase";
 import { MatchDetail } from "./MatchDetail";
 import { Add } from "./Add";
 import { createStackNavigator } from "@react-navigation/stack";
+import { useFocusEffect } from '@react-navigation/native'
 import { dateFormatter } from "../Utils/date";
 import { getEvents } from "../Utils/firebase";
 import { getAuth } from "firebase/auth";
@@ -49,11 +50,30 @@ function Schedule({ navigation }) {
   const [filteredMatchesId, setFilteredMatchesId] = React.useState([{}]);
   const [markedDates, setMarkedDates] = React.useState({});
 
+    useFocusEffect(
+        useCallback(() => {
+            //View did appear
+            const init = async () => {
+                // await uploadMatch({
+                //   date: "2024-03-02",
+                //   hour: 12,
+                //   score1: 3,
+                //   title: "ice hockey",
+                //   team1: "Cushing",
+                //   team2: "team2",
+                //   location: "Cushings",
+                // });
+                setEventsAndMatches();
+            };
+            init();
+        }, [])
+    );
+
   // gets all matches
   async function getMatches(tempMarkedDates) {
     const q = query(collection(db, "Matches"));
     const querySnapshot = await getDocs(q);
-    tempMatches = {};
+    const tempMatches = {};
     querySnapshot.forEach((doc) => {
       // updates all the matches
       let data = doc.data();
@@ -135,21 +155,21 @@ function Schedule({ navigation }) {
     init();
   }, []);
 
-  useEffect(() => {
-    const init = async () => {
-      // await uploadMatch({
-      //   date: "2024-03-02",
-      //   hour: 12,
-      //   score1: 3,
-      //   title: "ice hockey",
-      //   team1: "Cushing",
-      //   team2: "team2",
-      //   location: "Cushings",
-      // });
-      setEventsAndMatches();
-    };
-    init();
-  }, []);
+  // useEffect(() => {
+  //   const init = async () => {
+  //     // await uploadMatch({
+  //     //   date: "2024-03-02",
+  //     //   hour: 12,
+  //     //   score1: 3,
+  //     //   title: "ice hockey",
+  //     //   team1: "Cushing",
+  //     //   team2: "team2",
+  //     //   location: "Cushings",
+  //     // });
+  //     setEventsAndMatches();
+  //   };
+  //   init();
+  // }, []);
   useEffect(() => {
     const init = async () => {
       filterMatches();
@@ -219,10 +239,12 @@ function Schedule({ navigation }) {
                 key={Object.keys(filteredMatches)[index]}
               >
                 <Match
-                  isHome={true}
+                  isHome={match.isHome ?? true}
                   // isLive={true}
                   date={match.date}
-                  time={match.hour}
+                  time={
+                      isNaN(match.hour) ? '--:--' : (match.hour + ":" + (match.minutes ?? "00"))
+                  }
                   team1={match.team1}
                   team2={match.team2}
                   title={match.title}
@@ -239,12 +261,12 @@ function Schedule({ navigation }) {
 function Match({ isHome, time, team1, team2, title, date }) {
   function setIsLive(dateString, givenHour) {
     let date = new Date();
-    currentDate = date.toISOString().split("T")[0];
+    const currentDate = date.toISOString().split("T")[0];
 
     // Check if the dates are the same
 
-    const isSameDate = dateString == currentDate;
-    const isHourWithinLimit = new Date().getHours() == givenHour;
+    const isSameDate = dateString === currentDate;
+    const isHourWithinLimit = new Date().getHours() === givenHour;
     return isSameDate && isHourWithinLimit;
   }
   let isLive = setIsLive(date, time);
@@ -276,7 +298,7 @@ function Match({ isHome, time, team1, team2, title, date }) {
           }}
         >
           <Text style={{ color: "white", fontWeight: "700" }}>
-            {time + ":00"}
+            {time}
           </Text>
         </View>
         <Text
@@ -407,6 +429,15 @@ export default function ScheduleTab() {
           headerTitleAlign: "center",
           headerBackTitleVisible: false,
         }}
+      />
+      <Stack.Screen
+          name="Edit"
+          component={Add}
+          options={{
+              title: "Edit",
+              headerTitleAlign: "center",
+              headerBackTitleVisible: false,
+          }}
       />
     </Stack.Navigator>
   );

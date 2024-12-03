@@ -22,7 +22,6 @@ import {
   getDoc,
   getDocs,
   updateDoc,
-  setDoc,
   addDoc,
   collection,
   query,
@@ -30,15 +29,10 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { getAuth } from "firebase/auth";
-import { AutoFocus } from "expo-camera";
+
 export function MatchDetail({
   navigation,
   route,
-  title,
-  team1,
-  team2,
-  date,
-  location,
 }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLive, setisLive] = useState();
@@ -134,24 +128,25 @@ export function MatchDetail({
     // resets the comment field
     setComment("");
   }
-  async function updateScores() {
-    console.log("ID: ", route.params.id);
-    const docRef = doc(db, "Matches", route.params.id);
 
-    await updateDoc(docRef, {
-      score1: Number(score1),
-      score2: Number(score2),
-    });
-    alert("Score updated!");
-  }
+    async function updateScores() {
+        console.log("ID: ", route.params.id);
+        const docRef = doc(db, "Matches", route.params.id);
+
+        await updateDoc(docRef, {
+            score1: Number(score1),
+            score2: Number(score2),
+        });
+        alert("Score updated!");
+    }
   function calculateLiveState(dateString, givenHour) {
     let date = new Date();
-    currentDate = date.toISOString().split("T")[0];
-    matchDate = new Date(dateString).setHours(givenHour);
+    const currentDate = date.toISOString().split("T")[0];
+    const matchDate = new Date(dateString).setHours(givenHour);
 
     // Check if the dates are the same
-    const isSameDate = dateString == currentDate;
-    const isHourWithinLimit = new Date().getHours() == givenHour;
+    const isSameDate = dateString === currentDate;
+    const isHourWithinLimit = new Date().getHours() === givenHour;
 
     let today = new Date();
     if (isSameDate && isHourWithinLimit) {
@@ -170,7 +165,7 @@ export function MatchDetail({
             alignItems: "center",
           }}
         >
-          {liveState == "Live" ? (
+          {liveState === "Live" ? (
             <MaterialIcons
               style={{ marginRight: wp("5%") }}
               name="campaign"
@@ -194,8 +189,14 @@ export function MatchDetail({
             </View>
           )}
           {isAdmin && (
-            <Pressable>
-              <Button onPress={updateScores} title="Save" color="green" />
+            <Pressable style={{display: 'flex', flexDirection: 'row'}}>
+                <Button onPress={() => {
+                    navigation.navigate("Edit", {
+                        editType: 'match',
+                        editItem: route.params,
+                    })
+                }} title="Edit" color="green" />
+                <Button onPress={updateScores} title="Save" color="green" />
             </Pressable>
           )}
         </View>
@@ -211,6 +212,8 @@ export function MatchDetail({
     };
     init();
   }, []);
+  console.log('route.params : ', route.params)
+    console.log('comments : ', comments)
   return (
     <SafeAreaView>
       <View style={{ backgroundColor: "white" }}>
@@ -221,125 +224,118 @@ export function MatchDetail({
             {route.params.title}
           </Text>
         </View>
-
-        <View
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "center",
-            margin: wp("3%"),
-            marginBottom: hp("0%"),
-            alignItems: "center",
-          }}
-        >
           <View
-            style={{
-              backgroundColor: "green",
-              padding: wp("2%"),
-              paddingLeft: wp("2%"),
-              paddingRight: wp("2%"),
-              borderRadius: 10,
-              flex: 0.45,
-            }}
-          >
-            <Text
               style={{
-                color: "white",
-                textAlign: "center",
-                fontSize: liveState == "Live" ? 16 : 20,
-                fontWeight: "400",
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  margin: wp("3%"),
+                  marginBottom: hp("0%"),
+                  alignItems: "center",
               }}
-            >
-              {route.params.team1}
-            </Text>
-            {/* show this for isAdmin */}
-            <View>
-              {isAdmin ? (
-                <TextInput
-                  style={styles.scoreInput}
-                  // onChangeText={setScore1}
-                  onChangeText={(newValue) => {
-                    setScore1(newValue);
-                  }}
-                  value={score1}
-                  placeholder={route.params.score1.toString()}
-                  // placeholder="Type score1"
-                />
-              ) : (
-                <Text
+          >
+              <View
                   style={{
-                    marginTop: hp("1%"),
-                    color: "white",
-                    textAlign: "center",
-                    fontSize: 36,
-                    fontWeight: "600",
+                      backgroundColor: "green",
+                      padding: wp("2%"),
+                      paddingLeft: wp("2%"),
+                      paddingRight: wp("2%"),
+                      borderRadius: 10,
+                      flex: 0.45,
                   }}
-                >
-                  {route.params.score1}
-                  {/* {score1} */}
-                </Text>
-              )}
-            </View>
-          </View>
-
-          <Text
-            style={{
-              fontSize: 20,
-              marginLeft: wp("4%"),
-              marginRight: wp("4%"),
-              color: "#505050",
-            }}
-          >
-            {" "}
-            vs{" "}
-          </Text>
-
-          <View
-            style={{
-              backgroundColor: "green",
-              padding: wp("2%"),
-              borderRadius: 10,
-              flex: 0.45,
-            }}
-          >
-            <Text
-              style={{
-                color: "white",
-                textAlign: "center",
-                fontSize: liveState == "Live" ? 16 : 20,
-                fontWeight: "400",
-              }}
-            >
-              {route.params.team2}
-            </Text>
-            <View>
-              {isAdmin ? (
-                <TextInput
-                  style={styles.scoreInput}
-                  onChangeText={setScore2}
-                  value={score2}
-                  placeholder={route.params.score2.toString()}
-                  // placeholderTextColor={"ivory"}
-                />
-              ) : (
-                score2 && (
+              >
                   <Text
-                    style={{
-                      marginTop: hp("1%"),
-                      color: "white",
-                      textAlign: "center",
-                      fontSize: 36,
-                      fontWeight: "600",
-                    }}
+                      style={{
+                          color: "white",
+                          textAlign: "center",
+                          fontSize: liveState === "Live" ? 16 : 20,
+                          fontWeight: "400",
+                      }}
                   >
-                    {route.params.score2}
+                      {route.params.team1}
                   </Text>
-                )
-              )}
-            </View>
-          </View>
-        </View>
+                  {/* show this for isAdmin */}
+                  <View>
+                      {isAdmin ? (
+                          <TextInput
+                              style={styles.scoreInput}
+                              // onChangeText={setScore1}
+                              onChangeText={(newValue) => {
+                                  setScore1(newValue);
+                              }}
+                              value={score1}
+                              placeholder={route.params.score1?.toString() ?? "-"}
+                              // placeholder="Type score1"
+                          />
+                      ) : (
+                          <Text
+                              style={{
+                                  marginTop: hp("1%"),
+                                  color: "white",
+                                  textAlign: "center",
+                                  fontSize: 36,
+                                  fontWeight: "600",
+                              }}
+                          >
+                              {route.params.score1}
+                          </Text>
+                      )}
+                  </View>
+              </View>
 
+              <Text
+                  style={{
+                      fontSize: 20,
+                      marginLeft: wp("4%"),
+                      marginRight: wp("4%"),
+                      color: "#505050",
+                  }}
+              >{" vs "}</Text>
+              <View
+                  style={{
+                      backgroundColor: "green",
+                      padding: wp("2%"),
+                      borderRadius: 10,
+                      flex: 0.45,
+                  }}
+              >
+                  <Text
+                      style={{
+                          color: "white",
+                          textAlign: "center",
+                          fontSize: liveState === "Live" ? 16 : 20,
+                          fontWeight: "400",
+                      }}
+                  >
+                      {route.params.team2}
+                  </Text>
+                  <View>
+                      {isAdmin ? (
+                          <TextInput
+                              style={styles.scoreInput}
+                              onChangeText={setScore2}
+                              value={score2}
+                              placeholder={route.params.score2?.toString() ?? "-"}
+                              // placeholderTextColor={"ivory"}
+                          />
+                      ) : (
+                          (score2 != null || score2 !== undefined) ? (
+                              <Text
+                                  style={{
+                                      marginTop: hp("1%"),
+                                      color: "white",
+                                      textAlign: "center",
+                                      fontSize: 36,
+                                      fontWeight: "600",
+                                  }}
+                              >
+                                  {route.params.score2}
+                              </Text>
+                          ) : <View/>
+                      )}
+                  </View>
+              </View>
+          </View>
         <View
           style={{
             display: "flex",
@@ -366,8 +362,7 @@ export function MatchDetail({
             <Text
               style={{ marginLeft: wp("2%"), color: "#505050", fontSize: 14 }}
             >
-              {/* Nov 22 2023, 15:00 */}
-              {route.params.date + ", " + route.params.hour + ":00"}
+              {route.params.date + ", " + route.params.hour + ":" + (route.params.minutes ?? "00")}
             </Text>
           </View>
           <View
@@ -381,15 +376,11 @@ export function MatchDetail({
             <SimpleLineIcons name="location-pin" size={27} color="grey" />
             <Text
               style={{ marginLeft: wp("2%"), color: "#505050", fontSize: 14 }}
-            >
-              {route.params.location}
-            </Text>
+            >{route.params.location}</Text>
           </View>
         </View>
       </View>
       <ScrollView>
-        {/* Comments */}
-
         <View style={{ margin: wp("10%") }}>
           {Object.values(comments).map((comment, i) => (
             <>

@@ -13,6 +13,7 @@ import {
   query,
   where,
   getDocs,
+  deleteDoc,
 } from "firebase/firestore";
 import {
   getAuth,
@@ -29,6 +30,16 @@ export async function uploadMatch(data) {
 
 export async function uploadEvent(data) {
   const docRef = await addDoc(collection(db, "Events"), data);
+}
+
+export async function removeMatchFor(dataId) {
+  const docRef = await doc(db, "Matches", dataId)
+  await deleteDoc(docRef)
+}
+
+export async function removeEventFor(dataId) {
+  const docRef = await doc(db, "Events", dataId)
+  await deleteDoc(docRef)
 }
 
 // export const getUserId = async function uploadBeforePromise() {
